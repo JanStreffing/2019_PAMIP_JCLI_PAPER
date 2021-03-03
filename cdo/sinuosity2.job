@@ -1,0 +1,23 @@
+#!/bin/ksh
+set -exu
+
+e=$1
+start=$2
+end=$3
+res=$4
+var=$5
+dir=$6
+
+
+for i in {${start}..${end}}
+do
+    cd ${dir}/${res}/Experiment_${e}/E$(printf "%03g" i)/outdata/oifs/z500_6hourly/
+    rm -rf ../sinuosity
+    mkdir -p ../sinuosity
+    cdo daymean 3D_$(printf "%03g" i)_6hourly.nc z500_$(printf "%03g" i)_daily.nc
+    ncatted -a calendar,time,o,c,"standard" z500_$(printf "%03g" i)_daily.nc
+    cd /p/project/chhb19/jstreffi/software/APPLICATE2/sinuosity
+    ./sinuosity ${dir}/${res}/Experiment_${e}/E$(printf "%03g" i)/outdata/oifs/z500_6hourly//z500_$(printf "%03g" i)_daily.nc ${dir}/${res}/Experiment_${e}/E$(printf "%03g" i)/outdata/oifs/z500_6hourly/sinuosity
+done
+exit 0
+

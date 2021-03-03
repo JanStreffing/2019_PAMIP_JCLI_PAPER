@@ -1,0 +1,71 @@
+#! /bin/bash
+set -x
+
+
+
+cd /mnt/lustre01/work/ba1035/a270092/postprocessing/PAMIP
+exp1="12"
+exp2="13"
+vars_echam="Z_V_MSLP"
+vars_oifs="z500"
+string=ensmean
+level=50000
+
+###################################
+#         Preparation		  #
+###################################
+for model in echam oifs 
+do
+	for season in DJF MAM JJA SON
+	do
+		if [ "$model" == "echam" ]
+		then
+			for res in T63 T127
+			do
+				path1="/work/bk0988/awicm/a270062/cpl_output_${res}_PAMIP${exp1}_PI_ATMO"
+				path2="/work/bk0988/awicm/a270062/cpl_output_${res}_PAMIP${exp2}_PI_ATMO"
+				cp ${path1}/${vars_echam}___avg_${season}.nc ${res}_${vars_echam}_${season}_${exp1}_${string}.nc
+				cp ${path2}/${vars_echam}___avg_${season}.nc ${res}_${vars_echam}_${season}_${exp2}_${string}.nc
+
+				cdo sub ${res}_${vars_echam}_${season}_${exp2}_${string}.nc ${res}_${vars_echam}_${season}_${exp1}_${string}.nc ${res}_${vars_echam}_${season}_${exp2}-${exp1}_${string}.nc
+				rm ${res}_${vars_echam}_${season}_${exp1}_${string}.nc ${res}_${vars_echam}_${season}_${exp2}_${string}.nc
+
+				cdo -r setcalendar,standard ${res}_${vars_echam}_${season}_${exp2}-${exp1}_${string}.nc tmp.nc
+		  		mv tmp.nc ${res}_${vars_echam}_${season}_${exp2}-${exp1}_${string}.nc
+
+				cdo sellevel,50000 ${res}_${vars_echam}_${season}_${exp2}-${exp1}_${string}.nc ${res}_${vars_echam}_${season}_${exp2}-${exp1}_${string}_${level}Pa.nc
+				rm ${res}_${vars_echam}_${season}_${exp2}-${exp1}_${string}.nc
+
+				cdo selvar,var156 ${res}_${vars_echam}_${season}_${exp2}-${exp1}_${string}_${level}Pa.nc ${res}_${vars_echam}_${season}_${exp2}-${exp1}_${string}_${level}Pa_var131.nc
+				rm ${res}_${vars_echam}_${season}_${exp2}-${exp1}_${string}_${level}Pa.nc
+
+				cdo chname,var156,Z ${res}_${vars_echam}_${season}_${exp2}-${exp1}_${string}_${level}Pa_var131.nc ${res}_${vars_oifs}_${season}_${exp2}-${exp1}_${string}_${level}Pa.nc
+				rm ${res}_${vars_echam}_${season}_${exp2}-${exp1}_${string}_${level}Pa_var131.nc
+			done
+		fi
+		if [ "$model" == "oifs" ]
+		then
+			for res in T159 T511
+			do
+				path1="/mnt/lustre01/work/ba1035/a270092/runtime/oifsamip/$res/Experiment_${exp1}/ensemble_mean"
+				path2="/mnt/lustre01/work/ba1035/a270092/runtime/oifsamip/$res/Experiment_${exp2}/ensemble_mean"
+				cp $path1/${vars_oifs}_${string}_${season}.nc ${res}_${vars_oifs}_${season}_${exp1}_${string}.nc
+				cp $path2/${vars_oifs}_${string}_${season}.nc ${res}_${vars_oifs}_${season}_${exp2}_${string}.nc
+
+				cdo sub ${res}_${vars_oifs}_${season}_${exp2}_${string}.nc ${res}_${vars_oifs}_${season}_${exp1}_${string}.nc ${res}_${vars_oifs}_${season}_${exp2}-${exp1}_${string}.nc
+				rm ${res}_${vars_oifs}_${season}_${exp1}_${string}.nc ${res}_${vars_oifs}_${season}_${exp2}_${string}.nc
+
+				cdo divc,9.81 ${res}_${vars_oifs}_${season}_${exp2}-${exp1}_${string}.nc tmp
+				mv tmp ${res}_${vars_oifs}_${season}_${exp2}-${exp1}_${string}.nc
+
+				cdo -r setcalendar,standard ${res}_${vars_oifs}_${season}_${exp2}-${exp1}_${string}.nc tmp.nc
+		  		mv tmp.nc ${res}_${vars_oifs}_${season}_${exp2}-${exp1}_${string}.nc
+
+				cdo remapbil,r180x91 ${res}_${vars_oifs}_${season}_${exp2}-${exp1}_${string}.nc ${res}_${vars_oifs}_${season}_${exp2}-${exp1}_${string}_${level}Pa.nc
+				rm ${res}_${vars_oifs}_${season}_${exp2}-${exp1}_${string}.nc
+			done
+		fi
+	done
+done
+exit 0
+

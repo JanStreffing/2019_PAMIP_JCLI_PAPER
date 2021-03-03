@@ -1,0 +1,58 @@
+#!/bin/ksh
+#SBATCH --job-name=OPP
+#SBATCH -p prepost
+#SBATCH --time=08:00:00
+#SBATCH -A ba1035
+
+set -x
+
+
+###################################
+#         Preparation		  #
+###################################
+
+exp1=$1
+start=$2
+end=$3
+res=$4
+dir=$6
+
+tempdir=$dir/$res/output/large
+
+vars=synact
+path1=$dir/$res/Experiment_${exp1}/synact/
+for i in {${2}..${3}}
+do
+	echo "====================================================="
+	echo "Synact for Experiment $i"
+	echo "====================================================="
+	for seasons in DJF SON MAM JJA
+	do
+		if [ "$seasons" == "DJF" ]; then
+			file_name_string_DJF+=" ${path1}/3D_$(printf "%03g" $i)_timstd_${seasons}.nc"
+		elif [ "$seasons" == "JJA" ]; then
+			file_name_string_JJA+=" ${path1}/3D_$(printf "%03g" $i)_timstd_${seasons}.nc"
+		elif [ "$seasons" == "SON" ]; then
+			file_name_string_MAM+=" ${path1}/3D_$(printf "%03g" $i)_timstd_${seasons}.nc"
+		elif [ "$seasons" == "MAM" ]; then
+			file_name_string_SON+=" ${path1}/3D_$(printf "%03g" $i)_timstd_${seasons}.nc"
+		fi
+
+	done
+done
+cd $tempdir
+cdo ensstd $file_name_string_DJF ${res}_ensstd_${vars}_DJF_${exp1}.nc
+cdo ensstd $file_name_string_JJA ${res}_ensstd_${vars}_JJA_${exp1}.nc
+cdo ensstd $file_name_string_MAM ${res}_ensstd_${vars}_MAM_${exp1}.nc
+cdo ensstd $file_name_string_SON ${res}_ensstd_${vars}_SON_${exp1}.nc
+unset file_name_string_DJF
+unset file_name_string_JJA
+unset file_name_string_MAM
+unset file_name_string_SON
+
+cdo ensmean ${res}_ensstd_${vars}_DJF_11.nc ${res}_ensstd_${vars}_DJF_16.nc ${res}_ensstd_${vars}_DJF_11-16.nc
+cdo ensmean ${res}_ensstd_${vars}_JJA_11.nc ${res}_ensstd_${vars}_JJA_16.nc ${res}_ensstd_${vars}_JJA_11-16.nc
+cdo ensmean ${res}_ensstd_${vars}_MAM_11.nc ${res}_ensstd_${vars}_MAM_16.nc ${res}_ensstd_${vars}_MAM_11-16.nc
+cdo ensmean ${res}_ensstd_${vars}_SON_11.nc ${res}_ensstd_${vars}_SON_16.nc ${res}_ensstd_${vars}_SON_11-16.nc
+
+exit 0

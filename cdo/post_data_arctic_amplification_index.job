@@ -1,0 +1,58 @@
+#! /bin/bash
+set -x
+
+
+
+cd /mnt/lustre01/work/ba1035/a270092/postprocessing/PAMIP
+exp1="12"
+exp2="13"
+var="T2M"
+
+for res in T511
+do
+	cdo cat ${res}_${var}_DJF_${exp2}-${exp1}_ensmean.nc ${res}_${var}_SON_${exp2}-${exp1}_ensmean.nc ${res}_${var}_MAM_${exp2}-${exp1}_ensmean.nc ${res}_${var}_JJA_${exp2}-${exp1}_ensmean.nc ${res}_${var}_cat_${exp2}-${exp1}_ensmean.nc 
+
+	cdo timmean ${res}_${var}_cat_${exp2}-${exp1}_ensmean.nc  ${res}_${var}_sub_${exp2}-${exp1}_ensmean.nc 
+
+	rm ${res}_${var}_cat_${exp2}-${exp1}_ensmean.nc ${res}_${var}_cat_${exp2}_ensmean.nc
+
+	cdo sellonlatbox,360,0,90,60 ${res}_${var}_sub_${exp2}-${exp1}_ensmean.nc 	${res}_${var}_sub_arctic_${exp2}-${exp1}_ensmean.nc
+	
+	cdo fldmean ${res}_${var}_sub_${exp2}-${exp1}_ensmean.nc   		${res}_${var}_fmean_${exp2}-${exp1}_ensmean.nc
+	cdo fldmean ${res}_${var}_sub_arctic_${exp2}-${exp1}_ensmean.nc 	${res}_${var}_fmean_arctic_${exp2}-${exp1}_ensmean.nc
+
+	rm ${res}_${var}_sub_${exp2}-${exp1}_ensmean.nc ${res}_${var}_sub_arctic_${exp2}-${exp1}_ensmean.nc
+	
+	cdo div ${res}_${var}_fmean_arctic_${exp2}-${exp1}_ensmean.nc ${res}_${var}_fmean_${exp2}-${exp1}_ensmean.nc  ${res}_${var}_arc_amp_factor_${exp2}-${exp1}_ensmean.nc
+	
+	rm ${res}_${var}_fmean_${exp2}-${exp1}_ensmean.nc ${res}_${var}_fmean_arctic_${exp2}-${exp1}_ensmean.nc 
+done
+
+for res in T63 T127
+do
+	cdo cat ${res}_${var}_DJF_${exp2}-${exp1}_ensmean_prelim.nc ${res}_${var}_SON_${exp2}-${exp1}_ensmean_prelim.nc ${res}_${var}_MAM_${exp2}-${exp1}_ensmean_prelim.nc ${res}_${var}_JJA_${exp2}-${exp1}_ensmean_prelim.nc ${res}_${var}_cat_${exp2}-${exp1}_ensmean_prelim.nc 
+
+	cdo timmean ${res}_${var}_cat_${exp2}-${exp1}_ensmean_prelim.nc  ${res}_${var}_sub_${exp2}-${exp1}_ensmean_prelim.nc 
+
+	rm ${res}_${var}_cat_${exp2}-${exp1}_ensmean_prelim.nc ${res}_${var}_cat_${exp2}_ensmean_prelim.nc
+
+	cdo sellonlatbox,360,0,90,60 ${res}_${var}_sub_${exp2}-${exp1}_ensmean_prelim.nc 	${res}_${var}_sub_arctic_${exp2}-${exp1}_ensmean_prelim.nc
+	
+	cdo fldmean ${res}_${var}_sub_${exp2}-${exp1}_ensmean_prelim.nc   		${res}_${var}_fmean_${exp2}-${exp1}_ensmean_prelim.nc
+	cdo fldmean ${res}_${var}_sub_arctic_${exp2}-${exp1}_ensmean_prelim.nc 	${res}_${var}_fmean_arctic_${exp2}-${exp1}_ensmean_prelim.nc
+
+	rm ${res}_${var}_sub_${exp2}-${exp1}_ensmean_prelim.nc ${res}_${var}_sub_arctic_${exp2}-${exp1}_ensmean_prelim.nc
+	
+	cdo div ${res}_${var}_fmean_arctic_${exp2}-${exp1}_ensmean_prelim.nc ${res}_${var}_fmean_${exp2}-${exp1}_ensmean_prelim.nc  ${res}_${var}_arc_amp_factor_${exp2}-${exp1}_ensmean_prelim.nc
+	
+	rm ${res}_${var}_fmean_${exp2}-${exp1}_ensmean_prelim.nc ${res}_${var}_fmean_arctic_${exp2}-${exp1}_ensmean_prelim.nc 
+done
+
+cdo infon T127_${var}_arc_amp_factor_${exp2}-${exp1}_ensmean.nc         
+cdo infon T511_${var}_arc_amp_factor_${exp2}-${exp1}_ensmean.nc
+cdo infon T127_${var}_arc_amp_factor_${exp2}-${exp1}_ensmean_prelim.nc  
+cdo infon T63_${var}_arc_amp_factor_${exp2}-${exp1}_ensmean.nc
+cdo infon T159_${var}_arc_amp_factor_${exp2}-${exp1}_ensmean.nc         
+cdo infon T63_${var}_arc_amp_factor_${exp2}-${exp1}_ensmean_prelim.nc
+exit 0
+

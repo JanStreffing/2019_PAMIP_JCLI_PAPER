@@ -1,0 +1,49 @@
+#! /bin/bash
+set -x
+
+
+filestring=3D_timstd
+workfolder=/mnt/lustre01/work/ba1035/a270092/postprocessing/PAMIP
+
+
+###################################
+#         Preparation		  #
+###################################
+for model in oifs 
+do
+	for season in DJF MAM JJA SON
+	do
+		if [ "$model" == "echam" ]
+		then
+			for res in T63 T127
+			do
+				for exp in 11 12 13 16 
+				do
+					path=/work/bk0988/awicm/a270062/cpl_output_${res}_PAMIP${exp}_synact/
+					cdo chname,var156,Z -remapbil,r180x91 -selvar,var156 -sellevel,50000 ${path}/${filestring}_${season}.nc ${workfolder}/${filestring}_${res}_${exp}_${season}.nc  
+				done
+			done
+		fi
+		if [ "$model" == "oifs" ]
+		then
+			for res in T159 T511
+			do
+				for exp in 11 12 13 16 
+				do
+					path=/mnt/lustre01/work/ba1035/a270092/runtime/oifsamip/${res}/Experiment_${exp}/synact/
+
+					cdo divc,9.81 -remapbil,r180x91 ${path}/${filestring}_${season}.nc ${workfolder}/${filestring}_${res}_${exp}_${season}.nc 
+				done
+			done
+		fi
+	done
+done
+
+for season in DJF MAM JJA SON
+do
+	for exp in 11 12 13 16 
+	do
+		cdo ensmean ${workfolder}/${filestring}_T63_${exp}_${season}.nc ${workfolder}/${filestring}_T127_${exp}_${season}.nc ${workfolder}/${filestring}_T159_${exp}_${season}.nc ${workfolder}/${filestring}_T511_${exp}_${season}.nc ${workfolder}/${filestring}_ensmean_${exp}_${season}.nc 
+	done
+done
+exit 0

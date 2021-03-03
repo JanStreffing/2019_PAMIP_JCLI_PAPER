@@ -1,0 +1,138 @@
+#! /bin/bash
+#!/bin/ksh
+#SBATCH --job-name=OPP
+#SBATCH -p prepost
+#SBATCH --time=08:00:00
+#SBATCH -A ba1035
+
+set -x
+
+vars="T2M"
+vars_echam="T2M"
+vars_echam_internal="temp2"	   
+exp1=11
+exp1_prelim="af"   #p1=11  ii=12  si=13  ai=15  af=16 
+tempdir=/mnt/lustre01/work/ba1035/a270092/postprocessing/PAMIP/large/
+
+###################################
+#         Preparation		  #
+###################################
+for model in oifs #echam
+do
+	printf "=========================================="
+	printf "working on model" $model
+	printf "=========================================="
+
+	if [ "$model" == "oifs" ]
+	then
+		for res in T159 T511
+		do
+			path1="/mnt/lustre01/work/ba1035/a270092/runtime/oifsamip/$res/Experiment_${exp1}/"
+			for i in {1..100}
+			do
+				printf "   ====================================================="
+				printf "   Processing Experiment id $i"
+				printf "   ====================================================="
+		    		cdo remapbil,r360x160 ${path1}/E$(printf "%03g" $i)//outdata/oifs/seasonal_mean/${vars}_seasmean.nc $tempdir/${res}_${vars}_${exp1}_$(printf "%03g" $i).nc
+				cdo splitseas $tempdir/${res}_${vars}_${exp1}_$(printf "%03g" $i).nc  $tempdir/${res}_${vars}_${exp1}_$(printf "%03g" $i)_
+				for seasons in DJF SON MAM JJA
+				do
+					mv $tempdir/${res}_${vars}_${exp1}_$(printf "%03g" $i)_${seasons}.nc $tempdir/${res}_${vars}_${seasons}_${exp1}_$(printf "%03g" $i).nc
+					if [ "$seasons" == "DJF" ]; then
+						file_name_string_DJF+="${res}_${vars}_${seasons}_${exp1}_$(printf "%03g" $i).nc "
+					elif [ "$seasons" == "JJA" ]; then
+						file_name_string_JJA+="${res}_${vars}_${seasons}_${exp1}_$(printf "%03g" $i).nc "
+					elif [ "$seasons" == "SON" ]; then
+						file_name_string_SON+="${res}_${vars}_${seasons}_${exp1}_$(printf "%03g" $i).nc "
+					elif [ "$seasons" == "MAM" ]; then
+						file_name_string_MAM+="${res}_${vars}_${seasons}_${exp1}_$(printf "%03g" $i).nc "
+					fi
+
+				done
+			done
+		done
+	fi
+
+	if [ "$model" == "echam" ]
+	then
+		for res in T63 T127
+		do
+			path1="/work/bk0988/awicm/a270062/cpl_output_${res}_PAMIP${exp1}_PI_ATMO"
+			for i in {1..100}
+			do
+				printf "   ====================================================="
+				printf "   Processing Experiment id $i"
+				printf "   ====================================================="
+				for seasons in DJF SON MAM JJA
+				do
+			    		cdo chname,$vars_echam_internal,$vars ${path1}/${vars_echam}_$(printf "%02g" $(($i-1)))_avg_${seasons}.nc $tempdir/${res}_${vars}_${seasons}_${exp1}_$(printf "%03g" $i).nc
+					if [ "$seasons" == "DJF" ]; then
+						file_name_string_DJF+="${res}_${vars}_${seasons}_${exp1}_$(printf "%03g" $i).nc "
+					elif [ "$seasons" == "JJA" ]; then
+						file_name_string_JJA+="${res}_${vars}_${seasons}_${exp1}_$(printf "%03g" $i).nc "
+					elif [ "$seasons" == "SON" ]; then
+						file_name_string_SON+="${res}_${vars}_${seasons}_${exp1}_$(printf "%03g" $i).nc "
+					elif [ "$seasons" == "MAM" ]; then
+						file_name_string_MAM+="${res}_${vars}_${seasons}_${exp1}_$(printf "%03g" $i).nc "
+					fi
+				done
+			done
+		done
+	fi
+
+
+
+	if [ "$model" == "echam_prelim" ]
+	then
+		for res in P63 P127
+		do
+			if [ "$res" == "P63" ]; then res_prelim="T63"; fi
+			if [ "$res" == "P127" ]; then res_prelim="T127"; fi
+
+			path1="/work/bk0988/awicm/a270062/cpl_output_${res_prelim}_PAMIP${exp1_prelim}_PI_ATMO"
+			for i in {1..100}
+			do
+				printf "   ====================================================="
+				printf "   Processing Experiment id $i"
+				printf "   ====================================================="
+				for seasons in DJF SON MAM JJA
+				do
+			    		cdo chname,$vars_echam_internal,$vars ${path1}/${vars_echam}_$(printf "%02g" $(($i-1)))_avg_${seasons}.nc $tempdir/${res}_${vars}_${seasons}_${exp1}_$(printf "%03g" $i).nc
+					if [ "$seasons" == "DJF" ]; then
+						file_name_string_DJF+="${res}_${vars}_${seasons}_${exp1}_$(printf "%03g" $i).nc "
+					elif [ "$seasons" == "JJA" ]; then
+						file_name_string_JJA+="${res}_${vars}_${seasons}_${exp1}_$(printf "%03g" $i).nc "
+					elif [ "$seasons" == "SON" ]; then
+						file_name_string_SON+="${res}_${vars}_${seasons}_${exp1}_$(printf "%03g" $i).nc "
+					elif [ "$seasons" == "MAM" ]; then
+						file_name_string_MAM+="${res}_${vars}_${seasons}_${exp1}_$(printf "%03g" $i).nc "
+					fi
+				done
+			done
+		done
+	fi
+
+done
+
+
+echo $file_name_string_DJF 
+echo $file_name_string_JJA 
+echo $file_name_string_MAM 
+echo $file_name_string_SON 
+
+cd $tempdir
+cdo ensmean $file_name_string_DJF ensmean_${vars}_DJF_${exp1}.nc 
+cdo ensmean $file_name_string_JJA ensmean_${vars}_JJA_${exp1}.nc 
+cdo ensmean $file_name_string_MAM ensmean_${vars}_MAM_${exp1}.nc 
+cdo ensmean $file_name_string_SON ensmean_${vars}_SON_${exp1}.nc 
+
+cdo ensstd $file_name_string_DJF ensstd_${vars}_DJF_${exp1}.nc 
+cdo ensstd $file_name_string_JJA ensstd_${vars}_JJA_${exp1}.nc 
+cdo ensstd $file_name_string_MAM ensstd_${vars}_MAM_${exp1}.nc 
+cdo ensstd $file_name_string_SON ensstd_${vars}_SON_${exp1}.nc 
+
+#rm T*T2M*${exp1}*
+#rm P*T2M*${exp1}*
+
+exit 0
+

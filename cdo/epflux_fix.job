@@ -1,0 +1,39 @@
+#!/usr/bin/ksh
+
+export FUNCTION_PATH=/p/project/chhb19/jstreffi/pamip-esm-master/esm-runscripts/functions/all
+START_DATE_oifs=20000401
+END_DATE_oifs=20010531
+RUN_NUMBER_oifs=1
+n_ep=0
+start=301
+end=600
+
+for e in 16
+do
+	for i in {${start}..${end}}
+	do
+		cd /p/largedata/hhb19/jstreffi/runtime/oifsamip/T159/Experiment_${e}/E$(printf "%03g" i)/outdata/oifs/00001
+		while true
+		do
+			echo ${FUNCTION_PATH}
+			ls ${FUNCTION_PATH}/calc_date
+			echo -M${n_ep}
+			echo ${START_DATE_oifs}
+
+			START_DATE_ncl=`${FUNCTION_PATH}/calc_date plus -c1 -M${n_ep} -- ${START_DATE_oifs}`
+			END_DATE_ncl=`${FUNCTION_PATH}/calc_date plus -c1 -M1 -- ${START_DATE_ncl}`
+			END_DATE_ncl=`${FUNCTION_PATH}/calc_date minus -c1 -D1 -- ${END_DATE_ncl}`
+			n_ep=$(($n_ep+1))
+			echo " Start date for ncl script: ${START_DATE_ncl} "
+			echo " End date for ncl script: ${END_DATE_ncl} "
+
+			/p/project/chhb19/jstreffi/software/miniconda3/envs/pyfesom2/bin/ncl /p/project/chhb19/jstreffi/pamip-esm-master/esm-runscripts/functions/externals/ncl/epflux.ncl yearStrt=${START_DATE_ncl:0:4} monStrt=${START_DATE_ncl:4:2} dayStrt=${START_DATE_ncl:6:2} yearLast=${END_DATE_ncl:0:4} monLast=${END_DATE_ncl:4:2} dayLast=${END_DATE_ncl:6:2}
+			cdo -r settaxis,${START_DATE_ncl:0:4}-${START_DATE_ncl:4:2}-${START_DATE_ncl:6:2},00:00:00,6hour epf.nc epf_step.nc             # cdo settaxis done twice
+			cdo -r settaxis,${START_DATE_ncl:0:4}-${START_DATE_ncl:4:2}-${START_DATE_ncl:6:2},00:00:00,6hour epf_step.nc epf_t${n_ep}.nc	# otherwise it doesn't work...
+			if [[ `${FUNCTION_PATH}/later_date -- ${END_DATE_ncl} ${END_DATE_oifs}` = ${END_DATE_ncl} ]]; then; break; fi
+		done
+		rm *for_ep epf_step.nc epf.nc
+		cdo mergetime epf_t*.nc epf_$(printf "%05d" ${RUN_NUMBER_oifs}).nc
+		rm epf_t*
+	done
+done

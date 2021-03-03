@@ -1,0 +1,11 @@
+variance_*
+*.nc
+*.gmp
+*.ctl
+*.grb
+nohup.out
+slurm-*
+*~
+.Rhistory
+*.swp
+*.out

@@ -1,0 +1,46 @@
+#! /bin/bash
+set -x
+
+
+
+cd /mnt/lustre01/work/ba1035/a270092/postprocessing/PAMIP
+#p1=11  ii=12  si=13  ai=15  af=16 
+vars_echam="T_U"
+vars_echam_internal="var131"
+vars_oifs="z500"
+string=ensmean
+
+
+###################################
+#         Preparation		  #
+###################################
+model=oifs 
+	for season in DJF MAM JJA SON
+	do
+		if [ "$model" == "oifs" ]
+		then
+			for res in T159 T511
+			do
+				for exp1 in 11 12 13 16
+				do
+					path="/mnt/lustre01/work/ba1035/a270092/runtime/oifsamip/$res/Experiment_${exp1}/ensemble_mean"
+					cp $path/${vars_oifs}_${string}_${season}.nc ${res}_${vars_oifs}_${season}_${exp1}_${string}.nc
+
+					cdo -r setcalendar,standard ${res}_${vars_oifs}_${season}_${exp1}_${string}.nc tmp.nc
+			  		mv tmp.nc ${res}_${vars_oifs}_${season}_${exp1}_${string}.nc
+				
+					cdo sellevel,100000,92500,85000,70000,50000,40000,30000,25000,20000,10000,5000,1000,100 ${res}_${vars_oifs}_${season}_${exp1}_${string}.nc tmp.nc
+					mv tmp.nc ${res}_${vars_oifs}_${season}_${exp1}_${string}.nc
+
+					cdo remapbil,r180x91 ${res}_${vars_oifs}_${season}_${exp1}_${string}.nc tmp.nc
+					mv tmp.nc ${res}_${vars_oifs}_${season}_${exp1}_${string}.nc
+				done
+			done
+		fi
+ 		for exp1 in 11 12 13 16
+		do
+			cdo ensmean T159_${vars_oifs}_${season}_${exp1}_${string}.nc T511_${vars_oifs}_${season}_${exp1}_${string}.nc T159_and_T511_${vars_oifs}_${season}_${exp1}_${string}.nc
+		done
+	done
+exit 0
+

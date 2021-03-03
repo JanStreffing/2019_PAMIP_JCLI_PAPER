@@ -1,0 +1,40 @@
+#!/bin/ksh
+#SBATCH --job-name=OPP
+#SBATCH -p shared
+#SBATCH --time=08:00:00
+#SBATCH -A ab0246
+
+
+
+e=$1
+start=$2
+end=$3
+res=$4
+var=$5
+dir=$6
+
+startyear=2000
+endyear=2001
+
+rm -rf $dir/$res/Experiment_${e}/epflux/
+mkdir $dir/$res/Experiment_${e}/epflux/
+cd $dir/$res/Experiment_${e}/epflux/
+pwd
+
+for i in {${start}..${end}}
+do
+	if [[ $res == 'T159' || $res == 'T511' ]]
+	then
+		cdo -seltimestep,3/14 ../E$(printf "%03g" i)/outdata/oifs/00001/epf_00001.nc epf_${e}_$(printf "%03g" i).nc
+	else
+		rm -rf epf_${e}_$(printf "%03g" i).nc
+		for x in {2..7}
+		do
+			printf "      Leg number ${l}\n"
+			cdo cat ../E$(printf "%03g" i)/outdata/oifs/0000${x}/epf_0000${x}.nc epf_${e}_$(printf "%03g" i).nc
+		done
+	fi
+	file_name_string+="epf_${e}_$(printf "%03g" i).nc "
+done
+cdo ensmean $file_name_string epf_${e}_ensmean.nc
+exit

@@ -1,0 +1,67 @@
+#! /bin/bash
+set -x
+
+
+
+cd /mnt/lustre01/work/ba1035/a270092/postprocessing/PAMIP
+exp1="12"
+exp2="13"
+exp1_prelim="ii"   #p1=11  ii=12  si=13  ai=15  af=16 
+exp2_prelim="si"
+vars_echam="T_U"
+vars_echam_internal="st"
+vars_oifs="T"
+string=ensmean
+
+
+###################################
+#         Preparation		  #
+###################################
+for model in echam oifs 
+do
+	for season in DJF MAM JJA SON
+	do
+		if [ "$model" == "echam" ]
+		then
+			for res in T63 T127
+			do
+				for exp1 in 11 12 13 16 p1 ii si af
+				do
+					path="/work/bk0988/awicm/a270062/cpl_output_${res}_PAMIP${exp1}_PI_ATMO"
+					cp ${path}/${vars_echam}___avg_${season}.nc ${res}_${vars_echam}_${season}_${exp1}_${string}.nc
+
+					cdo -r setcalendar,standard ${res}_${vars_echam}_${season}_${exp1}_${string}.nc tmp.nc
+			  		mv tmp.nc ${res}_${vars_echam}_${season}_${exp1}_${string}.nc
+
+					cdo selvar,${vars_echam_internal} ${res}_${vars_echam}_${season}_${exp1}_${string}.nc ${res}_${vars_echam}_${season}_${exp1}_${string}_${vars_echam_internal}.nc
+					rm ${res}_${vars_echam}_${season}_${exp1}_${string}.nc
+
+					cdo chname,${vars_echam_internal},${vars_oifs} ${res}_${vars_echam}_${season}_${exp1}_${string}_${vars_echam_internal}.nc ${res}_${vars_oifs}_${season}_${exp1}_${string}.nc
+					rm ${res}_${vars_echam}_${season}_${exp1}_${string}_${vars_echam_internal}.nc
+				done
+			done
+		fi
+		if [ "$model" == "oifs" ]
+		then
+			for res in T159 T511
+			do
+				for exp1 in 11 12 13 16
+				do
+					path="/mnt/lustre01/work/ba1035/a270092/runtime/oifsamip/$res/Experiment_${exp1}/ensemble_mean"
+					cp $path/${vars_oifs}_${string}_${season}.nc ${res}_${vars_oifs}_${season}_${exp1}_${string}.nc
+
+					cdo -r setcalendar,standard ${res}_${vars_oifs}_${season}_${exp1}_${string}.nc tmp.nc
+			  		mv tmp.nc ${res}_${vars_oifs}_${season}_${exp1}_${string}.nc
+				
+					cdo sellevel,100000,92500,85000,70000,50000,40000,30000,25000,20000,10000,5000,1000,100 ${res}_${vars_oifs}_${season}_${exp1}_${string}.nc tmp.nc
+					mv tmp.nc ${res}_${vars_oifs}_${season}_${exp1}_${string}.nc
+
+					cdo remapbil,r180x91 ${res}_${vars_oifs}_${season}_${exp1}_${string}.nc tmp.nc
+					mv tmp.nc ${res}_${vars_oifs}_${season}_${exp1}_${string}.nc
+				done
+			done
+		fi
+	done
+done
+exit 0
+

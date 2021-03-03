@@ -1,0 +1,66 @@
+#! /bin/bash
+#!/bin/ksh
+#SBATCH --job-name=OPP
+#SBATCH -p prepost
+#SBATCH --time=08:00:00
+#SBATCH -A ba1035
+
+set -x
+
+tempdir=/mnt/lustre01/work/ba1035/a270092/postprocessing/PAMIP/large/
+
+###################################
+#         Preparation		  #
+###################################
+
+for vars in V U #MSL z500 T2M
+do
+for res in T159 T511
+do
+	for exp1 in 11 16
+	do
+		path1="/mnt/lustre01/work/ba1035/a270092/runtime/oifsamip/$res/Experiment_${exp1}/"
+		for i in {1..100}
+		do
+			echo "   ====================================================="
+			echo "   Processing Experiment id $i"
+			echo "   ====================================================="
+	    		cdo remapbil,r360x160 ${path1}/E$(printf "%03g" $i)//outdata/oifs/seasonal_mean/${vars}_seasmean.nc $tempdir/${res}_${vars}_${exp1}_$(printf "%03g" $i).nc
+			cdo splitseas $tempdir/${res}_${vars}_${exp1}_$(printf "%03g" $i).nc  $tempdir/${res}_${vars}_${exp1}_$(printf "%03g" $i)_
+			for seasons in DJF SON MAM JJA
+			do
+					mv $tempdir/${res}_${vars}_${exp1}_$(printf "%03g" $i)_${seasons}.nc $tempdir/${res}_${vars}_${seasons}_${exp1}_$(printf "%03g" $i).nc
+				if [ "$seasons" == "DJF" ]; then
+					file_name_string_DJF+="${res}_${vars}_${seasons}_${exp1}_$(printf "%03g" $i).nc "
+				elif [ "$seasons" == "JJA" ]; then
+					file_name_string_JJA+="${res}_${vars}_${seasons}_${exp1}_$(printf "%03g" $i).nc "
+				elif [ "$seasons" == "SON" ]; then
+					file_name_string_SON+="${res}_${vars}_${seasons}_${exp1}_$(printf "%03g" $i).nc "
+				elif [ "$seasons" == "MAM" ]; then
+					file_name_string_MAM+="${res}_${vars}_${seasons}_${exp1}_$(printf "%03g" $i).nc "
+				fi
+	
+			done
+		done
+	        cd $tempdir
+	        cdo ensstd $file_name_string_DJF ${res}_ensstd_${vars}_DJF_${exp1}.nc
+        	cdo ensstd $file_name_string_JJA ${res}_ensstd_${vars}_JJA_${exp1}.nc
+       		cdo ensstd $file_name_string_MAM ${res}_ensstd_${vars}_MAM_${exp1}.nc
+        	cdo ensstd $file_name_string_SON ${res}_ensstd_${vars}_SON_${exp1}.nc
+		unset file_name_string_DJF
+                unset file_name_string_JJA
+                unset file_name_string_MAM
+                unset file_name_string_SON
+
+	done
+	cdo ensmean ${res}_ensstd_${vars}_DJF_11.nc ${res}_ensstd_${vars}_DJF_16.nc ${res}_ensstd_${vars}_DJF_11-16.nc
+        cdo ensmean ${res}_ensstd_${vars}_JJA_11.nc ${res}_ensstd_${vars}_JJA_16.nc ${res}_ensstd_${vars}_JJA_11-16.nc
+        cdo ensmean ${res}_ensstd_${vars}_MAM_11.nc ${res}_ensstd_${vars}_MAM_16.nc ${res}_ensstd_${vars}_MAM_11-16.nc
+        cdo ensmean ${res}_ensstd_${vars}_SON_11.nc ${res}_ensstd_${vars}_SON_16.nc ${res}_ensstd_${vars}_SON_11-16.nc
+done
+done
+cd $tempdir
+
+
+
+

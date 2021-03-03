@@ -1,0 +1,47 @@
+#! /bin/bash
+set -x
+
+vars="z500"	   	    #U V
+input_res='T511' 	    #T511 T159 T127 T63
+output_res='960x480'	    #960x480 360x180 180x91
+
+
+for e in {14,16}
+do
+	cd /mnt/lustre01/work/ba1035/a270092/runtime/oifsamip/${input_res}/Experiment_$e/ensemble_mean
+	for i in {1..100}
+	do
+		ln -s ../E$(printf "%03g" $i)/outdata/oifs/seasonal_mean/${vars}_seasmean.nc ${vars}_$(printf "%02g" $((i-1))).nc 
+	done
+
+
+
+	for var in ${vars}; do
+	  cdo ensmean ${var}_00.nc ${var}_01.nc ${var}_02.nc ${var}_03.nc ${var}_04.nc ${var}_05.nc ${var}_06.nc ${var}_07.nc ${var}_08.nc ${var}_09.nc ${var}_10.nc ${var}_11.nc ${var}_12.nc ${var}_13.nc ${var}_14.nc ${var}_15.nc ${var}_16.nc ${var}_17.nc ${var}_18.nc ${var}_19.nc ${var}_20.nc ${var}_21.nc ${var}_22.nc ${var}_23.nc ${var}_24.nc ${var}_25.nc ${var}_26.nc ${var}_27.nc ${var}_28.nc ${var}_29.nc ${var}_30.nc ${var}_31.nc ${var}_32.nc ${var}_33.nc ${var}_34.nc ${var}_35.nc ${var}_36.nc ${var}_37.nc ${var}_38.nc ${var}_39.nc ${var}_40.nc ${var}_41.nc ${var}_42.nc ${var}_43.nc ${var}_44.nc ${var}_45.nc ${var}_46.nc ${var}_47.nc ${var}_48.nc ${var}_49.nc ${var}_50.nc ${var}_51.nc ${var}_52.nc ${var}_53.nc ${var}_54.nc ${var}_55.nc ${var}_56.nc ${var}_57.nc ${var}_58.nc ${var}_59.nc ${var}_60.nc ${var}_61.nc ${var}_62.nc ${var}_63.nc ${var}_64.nc ${var}_65.nc ${var}_66.nc ${var}_67.nc ${var}_68.nc ${var}_69.nc ${var}_70.nc ${var}_71.nc ${var}_72.nc ${var}_73.nc ${var}_74.nc ${var}_75.nc ${var}_76.nc ${var}_77.nc ${var}_78.nc ${var}_79.nc ${var}_80.nc ${var}_81.nc ${var}_82.nc ${var}_83.nc ${var}_84.nc ${var}_85.nc ${var}_86.nc ${var}_87.nc ${var}_88.nc ${var}_89.nc ${var}_90.nc ${var}_91.nc ${var}_92.nc ${var}_93.nc ${var}_94.nc ${var}_95.nc ${var}_96.nc ${var}_97.nc ${var}_98.nc ${var}_99.nc ${var}.nc
+	  file=${var}.nc
+	  cdo -r setcalendar,standard ${file} tmp.nc
+	  mv tmp.nc ${file}
+	  cdo remapbil,r${output_res} ${var}.nc ${var}_mon_1x1.nc    				
+	  cdo splitseas ${var}_mon_1x1.nc ${var}_mon_1x1_
+	  for sss in DJF MAM JJA SON; do
+	    cdo timavg ${var}_mon_1x1_${sss}.nc ${var}___avg_${sss}.nc
+	    cdo zonavg ${var}___avg_${sss}.nc ${var}___avg_${sss}_zonavg.nc
+	  done
+	  cdo timavg ${var}_mon_1x1.nc ${var}___avg.nc
+	  cdo detrend ${var}_mon_1x1.nc ${var}_mon_1x1_detrend.nc
+	  for expn in 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99; do
+	    cdo remapbil,r${output_res} ${var}_${expn}.nc ${var}_${expn}_mon_1x1.nc  		
+	    cdo splitseas ${var}_${expn}_mon_1x1.nc ${var}_${expn}_mon_1x1_
+	    for sss in DJF MAM JJA SON; do
+	      cdo timavg ${var}_${expn}_mon_1x1_${sss}.nc ${var}_${expn}_avg_${sss}.nc
+	      cdo enlarge,${var}_${expn}_avg_${sss}.nc ${var}___avg_${sss}_zonavg.nc tmpfile.nc
+	      cdo sub ${var}_${expn}_avg_${sss}.nc tmpfile.nc ${var}_${expn}_avg_${sss}_zondev.nc
+	    done
+	  done
+	  for sss in DJF MAM JJA SON; do
+	    cdo ensstd ${var}_00_avg_${sss}_zondev.nc ${var}_01_avg_${sss}_zondev.nc ${var}_02_avg_${sss}_zondev.nc ${var}_03_avg_${sss}_zondev.nc ${var}_04_avg_${sss}_zondev.nc ${var}_05_avg_${sss}_zondev.nc ${var}_06_avg_${sss}_zondev.nc ${var}_07_avg_${sss}_zondev.nc ${var}_08_avg_${sss}_zondev.nc ${var}_09_avg_${sss}_zondev.nc ${var}_10_avg_${sss}_zondev.nc ${var}_11_avg_${sss}_zondev.nc ${var}_12_avg_${sss}_zondev.nc ${var}_13_avg_${sss}_zondev.nc ${var}_14_avg_${sss}_zondev.nc ${var}_15_avg_${sss}_zondev.nc ${var}_16_avg_${sss}_zondev.nc ${var}_17_avg_${sss}_zondev.nc ${var}_18_avg_${sss}_zondev.nc ${var}_19_avg_${sss}_zondev.nc ${var}_20_avg_${sss}_zondev.nc ${var}_21_avg_${sss}_zondev.nc ${var}_22_avg_${sss}_zondev.nc ${var}_23_avg_${sss}_zondev.nc ${var}_24_avg_${sss}_zondev.nc ${var}_25_avg_${sss}_zondev.nc ${var}_26_avg_${sss}_zondev.nc ${var}_27_avg_${sss}_zondev.nc ${var}_28_avg_${sss}_zondev.nc ${var}_29_avg_${sss}_zondev.nc ${var}_30_avg_${sss}_zondev.nc ${var}_31_avg_${sss}_zondev.nc ${var}_32_avg_${sss}_zondev.nc ${var}_33_avg_${sss}_zondev.nc ${var}_34_avg_${sss}_zondev.nc ${var}_35_avg_${sss}_zondev.nc ${var}_36_avg_${sss}_zondev.nc ${var}_37_avg_${sss}_zondev.nc ${var}_38_avg_${sss}_zondev.nc ${var}_39_avg_${sss}_zondev.nc ${var}_40_avg_${sss}_zondev.nc ${var}_41_avg_${sss}_zondev.nc ${var}_42_avg_${sss}_zondev.nc ${var}_43_avg_${sss}_zondev.nc ${var}_44_avg_${sss}_zondev.nc ${var}_45_avg_${sss}_zondev.nc ${var}_46_avg_${sss}_zondev.nc ${var}_47_avg_${sss}_zondev.nc ${var}_48_avg_${sss}_zondev.nc ${var}_49_avg_${sss}_zondev.nc ${var}_50_avg_${sss}_zondev.nc ${var}_51_avg_${sss}_zondev.nc ${var}_52_avg_${sss}_zondev.nc ${var}_53_avg_${sss}_zondev.nc ${var}_54_avg_${sss}_zondev.nc ${var}_55_avg_${sss}_zondev.nc ${var}_56_avg_${sss}_zondev.nc ${var}_57_avg_${sss}_zondev.nc ${var}_58_avg_${sss}_zondev.nc ${var}_59_avg_${sss}_zondev.nc ${var}_60_avg_${sss}_zondev.nc ${var}_61_avg_${sss}_zondev.nc ${var}_62_avg_${sss}_zondev.nc ${var}_63_avg_${sss}_zondev.nc ${var}_64_avg_${sss}_zondev.nc ${var}_65_avg_${sss}_zondev.nc ${var}_66_avg_${sss}_zondev.nc ${var}_67_avg_${sss}_zondev.nc ${var}_68_avg_${sss}_zondev.nc ${var}_69_avg_${sss}_zondev.nc ${var}_70_avg_${sss}_zondev.nc ${var}_71_avg_${sss}_zondev.nc ${var}_72_avg_${sss}_zondev.nc ${var}_73_avg_${sss}_zondev.nc ${var}_74_avg_${sss}_zondev.nc ${var}_75_avg_${sss}_zondev.nc ${var}_76_avg_${sss}_zondev.nc ${var}_77_avg_${sss}_zondev.nc ${var}_78_avg_${sss}_zondev.nc ${var}_79_avg_${sss}_zondev.nc ${var}_80_avg_${sss}_zondev.nc ${var}_81_avg_${sss}_zondev.nc ${var}_82_avg_${sss}_zondev.nc ${var}_83_avg_${sss}_zondev.nc ${var}_84_avg_${sss}_zondev.nc ${var}_85_avg_${sss}_zondev.nc ${var}_86_avg_${sss}_zondev.nc ${var}_87_avg_${sss}_zondev.nc ${var}_88_avg_${sss}_zondev.nc ${var}_89_avg_${sss}_zondev.nc ${var}_90_avg_${sss}_zondev.nc ${var}_91_avg_${sss}_zondev.nc ${var}_92_avg_${sss}_zondev.nc ${var}_93_avg_${sss}_zondev.nc ${var}_94_avg_${sss}_zondev.nc ${var}_95_avg_${sss}_zondev.nc ${var}_96_avg_${sss}_zondev.nc ${var}_97_avg_${sss}_zondev.nc ${var}_98_avg_${sss}_zondev.nc ${var}_99_avg_${sss}_zondev.nc ${var}_${sss}_zondevstd.nc
+	  done
+	done
+done
+exit 0
+

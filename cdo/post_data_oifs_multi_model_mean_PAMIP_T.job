@@ -1,0 +1,19 @@
+#! /bin/bash
+set -x
+
+
+
+cd /mnt/lustre01/work/ba1035/a270092/postprocessing/PAMIP
+#p1=11  ii=12  si=13  ai=15  af=16 
+var="T"
+string=ensmean
+
+for season in DJF MAM JJA SON
+do
+	for exp1 in 11 12 13 16
+	do
+		cdo ensmean T63_${var}_${season}_${exp1}_${string}.nc T127_${var}_${season}_${exp1}_${string}.nc T159_${var}_${season}_${exp1}_${string}.nc T511_${var}_${season}_${exp1}_${string}.nc mmm_${var}_${season}_${exp1}_${string}.nc
+	done
+done
+exit 0
+

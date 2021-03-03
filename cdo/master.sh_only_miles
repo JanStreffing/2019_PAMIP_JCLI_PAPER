@@ -1,0 +1,23 @@
+#!/bin/bash
+
+dir='/p/largedata/hhb19/jstreffi/runtime/oifsamip'
+
+res='T511'
+#for res in {T159,T511,T1279}
+#do
+	if [ $res == T1279 ]; then
+		start=101
+		end=101
+	elif [ $res == T511 ]; then
+		start=201
+		end=201
+	elif [ $res == T159 ]; then
+		start=301
+		end=600
+	fi
+	
+	e=11
+	#for e in {11,16}
+	#do
+			./MiLES_prep.sh $e $start $end $res placeholder $dir
+			./MiLES_exec.sh $e $start $end $res $var $dir

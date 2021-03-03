@@ -1,0 +1,44 @@
+#!/bin/ksh
+#SBATCH -J NNN              # Specify job name
+#SBATCH -p esm              # Use partition prepost
+#SBATCH -N 1                # Specify number of nodes
+#SBATCH -n 1                # Specify max. number of tasks to be invoked
+#SBATCH -t 07:50:00         # Set a limit on the total run time
+#SBATCH -A chbb19           # Charge resources on this project account
+#SBATCH -o NNN.o%j          # File name for standard output
+#SBATCH -e NNN.e%j          # File name for standard error output
+
+set -exu
+
+e=$1
+start=$2
+end=$3
+res=$4
+var=$5
+dir=$6
+
+startyear=2000
+endyear=2001
+
+rm -rf $dir/$res/Experiment_${e}/polarch/pch_${e}_ensmean.nc
+mkdir -p $dir/$res/Experiment_${e}/polarch/
+cd $dir/$res/Experiment_${e}/polarch/
+
+for i in {${start}..${end}}
+do
+	if [[ $res == 'T159' || $res == 'T511' ]]; then
+		cdo --reduce_dim mermean -zonmean -sellonlatbox,-180,180,65,90 -seltimestep,613/1346 ../E$(printf "%03g" i)/outdata/oifs/00001/6h_Z_00001.nc pch_${e}_$(printf "%03g" i).nc
+	else
+		for l in {4..7}
+		do
+			printf "      Leg number ${l}\n"
+			cdo -s cat ../E$(printf "%03g" i)/outdata/oifs/$(printf "%05g" l)/6h_Z_$(printf "%05g" l).nc 6h_Z_cat.nc
+		done
+		
+		cdo --reduce_dim mermean -zonmean -sellonlatbox,-180,180,65,90 -seltimestep,125/849 6h_Z_cat.nc pch_${e}_$(printf "%03g" i).nc
+		rm 6h_Z_cat.nc
+	fi
+	file_name_string+="pch_${e}_$(printf "%03g" i).nc "
+done
+cdo ensmean $file_name_string pch_${e}_ensmean.nc
+exit

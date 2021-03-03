@@ -1,0 +1,41 @@
+#!/bin/ksh
+#SBATCH -J NNN              # Specify job name
+#SBATCH -p prepost             # Use partition prepost
+#SBATCH -N 1                   # Specify number of nodes
+#SBATCH -n 1                   # Specify max. number of tasks to be invoked
+#SBATCH -t 07:50:00                  # Set a limit on the total run time
+#SBATCH -A ba1035              # Charge resources on this project account
+#SBATCH -o NNN.o%j          # File name for standard output
+#SBATCH -e NNN.e%j          # File name for standard error output
+
+set -exu
+
+e=$1
+start=$2
+end=$3
+res=$4
+var=$5
+dir=$6
+
+
+startyear=2000
+endyear=2001
+
+for i in {${start}..${end}}
+do
+	cd $dir/$res/Experiment_${e}/E$(printf "%03g" i)/outdata/oifs/z500_6hourly
+	mv z500_6hourly.nc 3D_$(printf "%03g" ${i})_6hourly.nc
+	cdo shifttime,1day 3D_$(printf "%03g" ${i})_6hourly.nc 3D_$(printf "%03g" ${i})_6hourly_shifttime.nc
+	cdo splitseas 3D_$(printf "%03g" ${i})_6hourly_shifttime.nc 3D_$(printf "%03g" ${i})_6hourly_shifttime_
+	cdo splitseas 3D_$(printf "%03g" ${i})_6hourly.nc 3D_$(printf "%03g" ${i})_6hourly_
+
+	cdo seldate,${startyear}-06-02,${startyear}-08-31 3D_$(printf "%03g" ${i})_6hourly_shifttime_JJA.nc 3D_$(printf "%03g" ${i})_6hourly_shifttime_JJA_temp.nc && mv 3D_$(printf "%03g" ${i})_6hourly_shifttime_JJA_temp.nc 3D_$(printf "%03g" ${i})_6hourly_shifttime_JJA.nc
+	cdo seldate,${startyear}-06-02,${startyear}-08-31 3D_$(printf "%03g" ${i})_6hourly_JJA.nc 3D_$(printf "%03g" ${i})_6hourly_JJA_temp.nc && mv 3D_$(printf "%03g" ${i})_6hourly_JJA_temp.nc 3D_$(printf "%03g" ${i})_6hourly_JJA.nc
+
+	for season in DJF MAM JJA SON
+	do
+		cdo sub 3D_$(printf "%03g" ${i})_6hourly_${season}.nc 3D_$(printf "%03g" ${i})_6hourly_shifttime_${season}.nc 3D_$(printf "%03g" ${i})_6hourly_diff_${season}.nc
+		cdo timstd 3D_$(printf "%03g" ${i})_6hourly_diff_${season}.nc 3D_$(printf "%03g" ${i})_timstd_${season}.nc
+	done
+done
+exit
